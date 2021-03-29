@@ -20,11 +20,18 @@ class Creator(object):
     def __init__(self, field):
         self.field = field
 
+    @property
+    def _compat_field_name_value(self):
+        if DJANGO_VERSION >= (3, 2):
+            return self.field.attname
+        else:
+            return self.field.name
+
     def __get__(self, obj, objtype=None):
-        return obj.__dict__[self.field.name]
+        return obj.__dict__[self._compat_field_name_value]
 
     def __set__(self, obj, value):
-        obj.__dict__[self.field.name] = self.field.to_python(value)
+        obj.__dict__[self._compat_field_name_value] = self.field.to_python(value)
 
 
 class VersatileImageField(ImageField):

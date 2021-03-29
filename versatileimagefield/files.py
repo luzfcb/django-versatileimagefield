@@ -1,3 +1,4 @@
+from django import VERSION as DJANGO_VERSION
 from django.core.files.base import File
 from django.db.models.fields.files import (
     FieldFile,
@@ -23,8 +24,15 @@ class VersatileImageFieldFile(VersatileImageMixIn, ImageFieldFile):
 
 class VersatileImageFileDescriptor(ImageFileDescriptor):
 
+    @property
+    def _compat_field_name_value(self):
+        if DJANGO_VERSION >= (3, 2):
+            return self.field.attname
+        else:
+            return self.field.name
+
     def __set__(self, instance, value):
-        previous_file = instance.__dict__.get(self.field.name)
+        previous_file = instance.__dict__.get(self._compat_field_name_value)
         super(VersatileImageFileDescriptor, self).__set__(instance, value)
 
         # Updating ppoi_field on attribute set
@@ -48,7 +56,7 @@ class VersatileImageFileDescriptor(ImageFileDescriptor):
 
         # The instance dict contains whatever was originally assigned
         # in __set__.
-        file = instance.__dict__[self.field.name]
+        file = instance.__dict__[self._compat_field_name_value]
 
         # Call the placeholder procecess method on VersatileImageField.
         # (This was called inside the VersatileImageField __init__ before) Fixes #28
@@ -74,7 +82,7 @@ class VersatileImageFileDescriptor(ImageFileDescriptor):
                 # ...and assigning it to VersatileImageField instance
                 attr.ppoi = ppoi
 
-            instance.__dict__[self.field.name] = attr
+            instance.__dict__[self._compat_field_name_value] = attr
 
         # Other types of files may be assigned as well, but they need to have
         # the FieldFile interface added to the. Thus, we wrap any other type of
@@ -84,7 +92,7 @@ class VersatileImageFileDescriptor(ImageFileDescriptor):
             file_copy = self.field.attr_class(instance, self.field, file.name)
             file_copy.file = file
             file_copy._committed = False
-            instance.__dict__[self.field.name] = file_copy
+            instance.__dict__[self._compat_field_name_value] = file_copy
 
         # Finally, because of the (some would say boneheaded) way pickle works,
         # the underlying FieldFile might not actually itself have an associated
@@ -99,4 +107,4 @@ class VersatileImageFileDescriptor(ImageFileDescriptor):
                 file.ppoi = ppoi
 
         # That was fun, wasn't it?
-        return instance.__dict__[self.field.name]
+        return instance.__dict__[self._compat_field_name_value]
