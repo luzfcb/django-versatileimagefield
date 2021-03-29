@@ -184,8 +184,10 @@ class InvertImage(FilteredImage):
     See the `process_image()` for more specifics
     """
 
-    def process_image(self, image, image_format, save_kwargs={}):
+    def process_image(self, image, image_format, save_kwargs=None):
         """Return a BytesIO instance of `image` with inverted colors."""
+        if save_kwargs is None:
+            save_kwargs = {}
         imagefile = BytesIO()
         inv_image = ImageOps.invert(image)
         inv_image.save(

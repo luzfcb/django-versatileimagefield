@@ -39,6 +39,7 @@ class VersatileImageMixIn(object):
     def __init__(self, *args, **kwargs):
         """Construct PPOI and create_on_demand."""
         self._create_on_demand = VERSATILEIMAGEFIELD_CREATE_ON_DEMAND
+        self.filters = {}
         super(VersatileImageMixIn, self).__init__(*args, **kwargs)
         # Setting initial ppoi
         if self.field.ppoi_field:

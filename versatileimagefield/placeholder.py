@@ -40,6 +40,8 @@ class OnDiscPlaceholderImage(PlaceholderImage):
         `path` - An absolute path to an on-disc image.
         """
         self.path = path
+        self.file = None
+        self.name = None
 
     def setup(self):
         folder, name = os.path.split(self.path)
@@ -63,6 +65,8 @@ class OnStoragePlaceholderImage(PlaceholderImage):
         """
         self.path = path
         self.storage = storage
+        self.file = None
+        self.name = None
 
     def setup(self):
         storage = self.storage or default_storage
