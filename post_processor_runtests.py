@@ -13,10 +13,11 @@ if __name__ == "__main__":
     os.environ['DJANGO_SETTINGS_MODULE'] = 'tests.post_processor.test_settings'
     if django.VERSION >= (1, 7):
         django.setup()
+    tests_to_run = sys.argv[1:] or ["tests.post_processor"]
     TestRunnerPostProcessor = get_runner(
         settings,
         'tests.post_processor.discover_tests.DiscoverPostProcessorRunner'
     )
     test_runner_post_processor = TestRunnerPostProcessor()
-    failures = test_runner_post_processor.run_tests(["tests.post_processor"])
+    failures = test_runner_post_processor.run_tests(tests_to_run)
     sys.exit(bool(failures))
