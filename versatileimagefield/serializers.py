@@ -28,9 +28,8 @@ class VersatileImageFieldSerializer(ImageField):
     read_only = True
 
     def __init__(self, sizes, *args, **kwargs):
-        if isinstance(sizes, str):
-            sizes = get_rendition_key_set(sizes)
-        self.sizes = validate_versatileimagefield_sizekey_list(sizes)
+        self._non_validated_sizes = sizes
+        self.sizes = None
         super(VersatileImageFieldSerializer, self).__init__(
             *args, **kwargs
         )
@@ -38,6 +37,11 @@ class VersatileImageFieldSerializer(ImageField):
     def to_native(self, value):
         """For djangorestframework <=2.3.14"""
         context_request = None
+        if not self.sizes:
+            sizes = self._non_validated_sizes
+            if isinstance(sizes, str):
+                sizes = get_rendition_key_set(sizes)
+            self.sizes = validate_versatileimagefield_sizekey_list(sizes)
         if self.context:
             context_request = self.context.get('request', None)
         return build_versatileimagefield_url_set(
