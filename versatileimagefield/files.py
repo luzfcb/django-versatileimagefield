@@ -18,8 +18,17 @@ class VersatileImageFieldFile(VersatileImageMixIn, ImageFieldFile):
         # VersatileImageFileDescriptor below.
         state = super(VersatileImageFieldFile, self).__getstate__()
         state['_create_on_demand'] = self._create_on_demand
+        state['_ppoi_value'] = self._ppoi_value
         return state
 
+
+    def __setstate__(self, state):
+        result = super().__setstate__(state)
+        ppoi_value = state.get('_ppoi_value', None)
+        self.build_filters_and_sizers(ppoi_value, state['_create_on_demand'])
+        if ppoi_value:
+            setattr(self, "ppoi", ppoi_value)
+        return result
 
 class VersatileImageFileDescriptor(ImageFileDescriptor):
 

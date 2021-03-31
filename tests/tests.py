@@ -492,6 +492,7 @@ class VersatileImageFieldTestCase(VersatileImageFieldBaseTestCase):
 
     def test_versatile_image_field_picklability(self):
         """Ensure VersatileImageField instances can be pickled/unpickled."""
+        breakpoint()
         pickle.dump(self.jpg, open("pickletest.p", "wb"))
         jpg_unpickled = pickle.load(open("pickletest.p", "rb"))
         jpg_instance = jpg_unpickled
