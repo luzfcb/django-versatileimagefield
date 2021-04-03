@@ -25,6 +25,13 @@ MIDDLEWARE_CLASSES = (
 
 MIDDLEWARE = MIDDLEWARE_CLASSES
 
+# Default primary key field type for Django 3.2
+# https://docs.djangoproject.com/en/dev/ref/settings/#default-auto-field
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+AUTH_PASSWORD_VALIDATORS = [
+]
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
