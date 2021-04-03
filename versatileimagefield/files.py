@@ -12,11 +12,12 @@ from .mixins import VersatileImageMixIn
 class VersatileImageFieldFile(VersatileImageMixIn, ImageFieldFile):
 
     def __setstate__(self, state):
-        self.__dict__.update(state)
         if DJANGO_VERSION[0] >= 3 and DJANGO_VERSION[1] > 0:
-            self.storage = self.field.storage
+            super().__setstate__(state)
             self._create_on_demand = state.get('_create_on_demand')
             self._ppoi_value = state.get('_ppoi_value')
+        else:
+            self.__dict__.update(state)
 
     def __getstate__(self):
         # VersatileImageFieldFile needs access to its associated model field
@@ -32,8 +33,23 @@ class VersatileImageFieldFile(VersatileImageMixIn, ImageFieldFile):
 
 class VersatileImageFileDescriptor(ImageFileDescriptor):
 
+    @property
+    def _compat_field_name_value(self):
+        """
+            This method is used to maintain
+            backward compatibility with some
+            expected behavior before Django 3.2.
+            Behavior changed slightly in Django 3.2:
+            https://github.com/django/django/commit/6599608c4d0befdcb820ddccce55f183f247ae4f
+            https://github.com/django/django/commit/a93425a37f4defdb31d4ca96bb3bf6da21f0b5ce
+        """
+        if DJANGO_VERSION[0] >= 3 and DJANGO_VERSION[1] >= 2:
+            return self.field.attname
+        else:
+            return self.field.name
+
     def __set__(self, instance, value):
-        previous_file = instance.__dict__.get(self.field.name)
+        previous_file = instance.__dict__.get(self._compat_field_name_value)
         super().__set__(instance, value)
 
         # Updating ppoi_field on attribute set
@@ -57,7 +73,7 @@ class VersatileImageFileDescriptor(ImageFileDescriptor):
 
         # The instance dict contains whatever was originally assigned
         # in __set__.
-        file = instance.__dict__[self.field.name]
+        file = instance.__dict__[self._compat_field_name_value]
 
         # Call the placeholder process method on VersatileImageField.
         # (This was called inside the VersatileImageField __init__ before) Fixes #28
@@ -82,7 +98,7 @@ class VersatileImageFileDescriptor(ImageFileDescriptor):
                 ppoi = instance.__dict__[attr.field.ppoi_field]
                 # ...and assigning it to VersatileImageField instance
                 attr.ppoi = ppoi
-            instance.__dict__[self.field.name] = attr
+            instance.__dict__[self._compat_field_name_value] = attr
 
         # Other types of files may be assigned as well, but they need to have
         # the FieldFile interface added to the. Thus, we wrap any other type of
@@ -92,7 +108,7 @@ class VersatileImageFileDescriptor(ImageFileDescriptor):
             file_copy = self.field.attr_class(instance, self.field, file.name)
             file_copy.file = file
             file_copy._committed = False
-            instance.__dict__[self.field.name] = file_copy
+            instance.__dict__[self._compat_field_name_value] = file_copy
 
         # Finally, because of the (some would say boneheaded) way pickle works,
         # the underlying FieldFile might not actually itself have an associated
@@ -106,9 +122,14 @@ class VersatileImageFileDescriptor(ImageFileDescriptor):
                 ppoi = instance.__dict__[file.field.ppoi_field]
                 file.ppoi = ppoi
 
+        # https://github.com/django/django/commit/6f229048ddd8c7347ff60dddfb9121e6021c7b2e
+        # Make sure that the instance is correct.
+        elif isinstance(file, FieldFile) and instance is not file.instance:
+            file.instance = instance
+
         # That was fun, wasn't it?
         # Finally, ensure all the sizers/filters are available after pickling
-        to_return = instance.__dict__[self.field.name]
+        to_return = instance.__dict__[self._compat_field_name_value]
         to_return.build_filters_and_sizers(to_return.ppoi, to_return.create_on_demand)
-        instance.__dict__[self.field.name] = to_return
-        return instance.__dict__[self.field.name]
+        instance.__dict__[self._compat_field_name_value] = to_return
+        return instance.__dict__[self._compat_field_name_value]

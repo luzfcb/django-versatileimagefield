@@ -508,7 +508,6 @@ class VersatileImageFieldTestCase(VersatileImageFieldBaseTestCase):
         pickled_state = self.jpg.image.__getstate__()
         pickled_state.pop("field", None)
         pickled_state.pop("instance", None)
-        pickled_state.pop("storage", None)
         compare(
             actual=pickled_state,
             expected={
